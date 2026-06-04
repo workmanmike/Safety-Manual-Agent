@@ -312,7 +312,7 @@ Work stops during lightning, unsafe wind, ice accumulation, or heat/cold stress 
 let selectedFile = null;
 let selectedFileBase64 = "";
 let lastResult = null;
-const maxDirectFileBytes = 2.5 * 1024 * 1024;
+const maxDirectFileBytes = 25 * 1024 * 1024;
 const maxManualTextChars = 450000;
 
 const $ = (id) => document.getElementById(id);
@@ -354,23 +354,9 @@ async function handleFile(event) {
     selectedFile = null;
     event.target.value = "";
     $("fileName").textContent = "Choose manual file";
-    renderError(`PDF is ${formatBytes(actualSize)}. Hosted PDF review currently supports files up to ${formatBytes(maxDirectFileBytes)} because PDFs are sent as base64 JSON. For larger manuals, paste extracted text for now or run the app locally with a higher MAX_JSON_BODY_BYTES value.`);
+    renderError(`PDF is ${formatBytes(actualSize)}. Hosted PDF review supports files up to ${formatBytes(maxDirectFileBytes)}.`);
     return;
   }
-
-  selectedFileBase64 = await fileToBase64(selectedFile);
-}
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = String(reader.result || "");
-      resolve(result.includes(",") ? result.split(",")[1] : result);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 function parsePlaybook() {
@@ -402,21 +388,27 @@ async function runReview() {
       apiKey: $("apiKey").value,
       model: $("model").value,
       companyContext: $("companyContext").value,
+      sowBase: $("sowBase").value,
       manualText: $("manualText").value,
       playbook: parsePlaybook(),
-      file: selectedFileBase64
-        ? {
-            name: selectedFile?.name || "manual.pdf",
-            type: selectedFile?.type || "application/pdf",
-            base64: selectedFileBase64
-          }
-        : null
+      file: null
     };
+
+    let requestBody = JSON.stringify(payload);
+    let headers = { "Content-Type": "application/json" };
+
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append("payload", JSON.stringify(payload));
+      formData.append("manual", selectedFile, selectedFile.name);
+      requestBody = formData;
+      headers = {};
+    }
 
     const response = await fetch("/api/review", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      headers,
+      body: requestBody
     });
     const responseText = await response.text();
     let result;
@@ -544,7 +536,7 @@ function escapeHtml(value) {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('\"', "&quot;")
+    .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
 
