@@ -46,6 +46,12 @@ function normalizePlaybook(playbook) {
     passCriteria: String(item.passCriteria || item.pass || "").trim(),
     partialCriteria: String(item.partialCriteria || item.partial || "").trim(),
     failCriteria: String(item.failCriteria || item.fail || "").trim(),
+    standardsRefs: Array.isArray(item.standardsRefs)
+      ? item.standardsRefs.map(String).filter(Boolean)
+      : [],
+    requiredProgramElements: Array.isArray(item.requiredProgramElements)
+      ? item.requiredProgramElements.map(String).filter(Boolean)
+      : [],
     requiredEvidence: Array.isArray(item.requiredEvidence)
       ? item.requiredEvidence.map(String).filter(Boolean)
       : []
@@ -95,6 +101,7 @@ function heuristicReview({ manualText, playbook }) {
       category: item.category,
       requirement: item.requirement,
       severity: item.severity,
+      standardsRefs: item.standardsRefs || [],
       grade,
       score: grade === "needs_review" ? 0 : Number(score.toFixed(2)),
       evidence: evidenceMatches.length
@@ -104,6 +111,9 @@ function heuristicReview({ manualText, playbook }) {
       recommendation: grade === "pass"
         ? "Keep this requirement as written and verify during human review."
         : `Add clear language and evidence for: ${terms.slice(0, 4).join(", ")}.`,
+      standardGaps: grade === "pass"
+        ? []
+        : (item.requiredProgramElements || []).slice(0, 5),
       confidence: text ? "low" : "none",
       needsHumanReview: true
     };
@@ -158,15 +168,17 @@ function buildSchema() {
             category: { type: "string" },
             requirement: { type: "string" },
             severity: { type: "string" },
+            standardsRefs: { type: "array", items: { type: "string" } },
             grade: { type: "string", enum: ["pass", "partial", "fail", "not_applicable", "needs_review"] },
             score: { type: "number" },
             evidence: { type: "array", items: { type: "string" } },
             citation: { type: "string" },
             recommendation: { type: "string" },
+            standardGaps: { type: "array", items: { type: "string" } },
             confidence: { type: "string", enum: ["high", "medium", "low", "none"] },
             needsHumanReview: { type: "boolean" }
           },
-          required: ["id", "category", "requirement", "severity", "grade", "score", "evidence", "citation", "recommendation", "confidence", "needsHumanReview"]
+          required: ["id", "category", "requirement", "severity", "standardsRefs", "grade", "score", "evidence", "citation", "recommendation", "standardGaps", "confidence", "needsHumanReview"]
         }
       },
       riskMemo: { type: "array", items: { type: "string" } }
@@ -209,6 +221,8 @@ async function openAiReview(payload) {
     "You are a safety manual review agent for telecom/cell tower work.",
     "Grade the uploaded or pasted manual against the provided playbook.",
     "Every grade must be based on cited evidence from the manual or explicitly marked as missing evidence.",
+    "For every playbook item, check that the manual includes the required program elements, not merely the topic heading.",
+    "When standardsRefs are provided, assess whether the manual appears to address the intent of those standards and list missing standard-related gaps.",
     "Do not certify legal or regulatory compliance. Flag uncertain items for human review.",
     "Treat fall protection, tower rescue, RF exposure, electrical/LOTO, rigging, weather, PPE, and JHA gaps as safety-significant.",
     "",
