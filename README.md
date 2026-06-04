@@ -35,6 +35,12 @@ The app can use the OpenAI Responses API for PDF/manual review when an API key i
 
 Without an API key, the app uses a simple local heuristic mode for testing the playbook workflow on pasted text. Heuristic mode is intentionally low-confidence and should not be used as a safety determination.
 
+## Hosted upload limit
+
+The current prototype sends uploaded PDFs as base64 JSON. Hosted/serverless deployments often reject large request bodies before the app server can respond, so the browser limits direct PDF review to about 2.5 MB. For larger manuals, paste extracted text in the manual text box or run the app locally with a higher `MAX_JSON_BODY_BYTES` value.
+
+Production should replace this with a true file-upload flow, such as object storage plus OpenAI file/vector-store ingestion, instead of sending large PDFs through one JSON request.
+
 ## Safety note
 
 This is a review assistant, not a compliance certifier. All findings require human safety review before use in operations, customer submissions, or regulatory decisions.
