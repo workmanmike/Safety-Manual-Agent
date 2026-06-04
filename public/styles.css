@@ -1,15 +1,15 @@
 :root {
-  --bg: #f4f6f2;
+  --bg: #eaf6ff;
   --surface: #ffffff;
-  --ink: #14211c;
-  --muted: #607069;
-  --line: #d7ded7;
+  --ink: #112638;
+  --muted: #5f7182;
+  --line: #c8dced;
   --green: #0f766e;
   --green-dark: #0b4f49;
   --amber: #a65f00;
   --red: #b42318;
   --blue: #245b9e;
-  --shadow: 0 18px 50px rgba(22, 35, 28, 0.12);
+  --shadow: 0 18px 50px rgba(23, 68, 104, 0.14);
 }
 
 * {
@@ -35,9 +35,9 @@ textarea {
   justify-content: space-between;
   gap: 24px;
   padding: 22px 28px;
-  background: #16231d;
+  background: #174668;
   color: #fff;
-  border-bottom: 5px solid #f6c744;
+  border-bottom: 5px solid #8fd3ff;
 }
 
 .eyebrow {
@@ -46,7 +46,7 @@ textarea {
   font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
-  color: #a8d6cf;
+  color: #d6efff;
 }
 
 h1,
@@ -133,9 +133,9 @@ h3 {
   gap: 8px;
   min-height: 150px;
   padding: 18px;
-  border: 2px dashed #9db7ae;
+  border: 2px dashed #91bddc;
   border-radius: 8px;
-  background: #f7faf8;
+  background: #f4fbff;
   text-align: center;
   cursor: pointer;
 }
@@ -232,9 +232,9 @@ button:disabled {
 
 .secondary,
 .icon-button {
-  background: #eef4f1;
-  border-color: #c9d4ce;
-  color: #20332c;
+  background: #eef8ff;
+  border-color: #bdd6e9;
+  color: #18344a;
 }
 
 .results {
@@ -265,7 +265,7 @@ button:disabled {
   place-items: center;
   min-height: 150px;
   border-radius: 8px;
-  background: #16231d;
+  background: #174668;
   color: #fff;
 }
 
@@ -284,7 +284,7 @@ button:disabled {
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8faf8;
+  background: #f5fbff;
 }
 
 .stat strong {
@@ -317,7 +317,7 @@ button:disabled {
   gap: 12px;
   align-items: center;
   padding: 12px;
-  background: #f8faf8;
+  background: #f5fbff;
   border-bottom: 1px solid var(--line);
 }
 
@@ -361,9 +361,9 @@ button:disabled {
 
 .quote {
   padding: 10px 12px;
-  border-left: 3px solid #9db7ae;
-  background: #f7faf8;
-  color: #304039;
+  border-left: 3px solid #91bddc;
+  background: #f4fbff;
+  color: #263d50;
 }
 
 .meta {
