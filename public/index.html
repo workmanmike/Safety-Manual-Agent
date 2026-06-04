@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tower Safety Manual Reviewer</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Cell tower safety</p>
+        <h1>Manual Review Agent</h1>
+      </div>
+      <div class="status-pill" id="runMode">Local prototype</div>
+    </header>
+
+    <main class="layout">
+      <section class="panel left-panel">
+        <div class="section-head">
+          <div>
+            <h2>Manual</h2>
+            <p>Upload a PDF or paste extracted text for testing.</p>
+          </div>
+        </div>
+
+        <label class="dropzone" for="manualFile">
+          <span class="drop-icon">+</span>
+          <strong id="fileName">Choose manual file</strong>
+          <span>PDF works with OpenAI mode. TXT and MD can be reviewed locally.</span>
+          <input id="manualFile" type="file" accept=".pdf,.txt,.md,.text,application/pdf,text/plain">
+        </label>
+
+        <label class="field">
+          <span>Manual text or notes</span>
+          <textarea id="manualText" placeholder="Paste manual text here for no-key testing, or leave blank when uploading a PDF with OpenAI mode."></textarea>
+        </label>
+
+        <div class="grid two">
+          <label class="field">
+            <span>OpenAI API key</span>
+            <input id="apiKey" type="password" placeholder="Optional; kept in this browser session">
+          </label>
+          <label class="field">
+            <span>Model</span>
+            <input id="model" value="gpt-5">
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Company context</span>
+          <input id="companyContext" value="Cell tower construction, maintenance, repair, inspection, and managed field work.">
+        </label>
+
+        <div class="actions">
+          <button id="runReview" class="primary">Run review</button>
+          <button id="loadSample" class="secondary">Load sample manual text</button>
+          <button id="exportJson" class="secondary" disabled>Export JSON</button>
+        </div>
+      </section>
+
+      <section class="panel playbook-panel">
+        <div class="section-head">
+          <div>
+            <h2>Playbook</h2>
+            <p>Edit requirements as JSON. Each item becomes one graded checkpoint.</p>
+          </div>
+          <button id="resetPlaybook" class="icon-button" title="Reset playbook">Reset</button>
+        </div>
+        <textarea id="playbookEditor" spellcheck="false"></textarea>
+      </section>
+
+      <section class="results" id="results">
+        <div class="empty-state">
+          <h2>Ready to grade</h2>
+          <p>The report will show score, critical gaps, citations, and recommended fixes.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
