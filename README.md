@@ -6,6 +6,7 @@ A local prototype for reviewing telecom and cell tower safety manuals against a 
 
 - Upload a PDF manual for OpenAI-powered review.
 - Paste TXT/MD/manual text for local no-key testing.
+- Select an SOW base: Tower/Elevated, Electrical, Civil, or Other.
 - Edit the telecom installation safety playbook as JSON.
 - Grade each requirement as pass, partial, fail, not applicable, or needs review.
 - Show evidence, citations, standards references, standard gaps, recommendations, confidence, and a short operational risk memo.
@@ -37,9 +38,9 @@ Without an API key, the app uses a simple local heuristic mode for testing the p
 
 ## Hosted upload limit
 
-The current prototype sends uploaded PDFs as base64 JSON. Hosted/serverless deployments often reject large request bodies before the app server can respond, so the browser limits direct PDF review to about 2.5 MB. For larger manuals, paste extracted text in the manual text box or run the app locally with a higher `MAX_JSON_BODY_BYTES` value.
+The current prototype sends uploaded PDFs as multipart form data and limits direct PDF review to 25 MB. If your hosting platform has a smaller request-body limit, raise that platform limit or move file uploads to object storage.
 
-Production should replace this with a true file-upload flow, such as object storage plus OpenAI file/vector-store ingestion, instead of sending large PDFs through one JSON request.
+Production should eventually move file uploads to object storage plus OpenAI file/vector-store ingestion so large manuals do not depend on a single web request.
 
 ## Safety note
 
