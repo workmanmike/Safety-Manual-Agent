@@ -7,6 +7,7 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const publicDir = join(__dirname, "public");
 const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || "127.0.0.1";
+const maxJsonBodyBytes = Number(process.env.MAX_JSON_BODY_BYTES || 4 * 1024 * 1024);
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -31,11 +32,11 @@ function readJsonBody(req) {
     req.on("data", (chunk) => {
       if (tooLarge) return;
       body += chunk;
-      if (body.length > 75 * 1024 * 1024) {
+      if (body.length > maxJsonBodyBytes) {
         tooLarge = true;
         body = "";
-        reject(new HttpError(413, "Request entity too large. Keep uploads under about 50 MB.", {
-          maxBytes: 75 * 1024 * 1024
+        reject(new HttpError(413, `Request entity too large. Keep hosted review payloads under ${formatBytes(maxJsonBodyBytes)}.`, {
+          maxBytes: maxJsonBodyBytes
         }));
       }
     });
@@ -49,6 +50,11 @@ function readJsonBody(req) {
     });
     req.on("error", reject);
   });
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function normalizePlaybook(playbook) {
