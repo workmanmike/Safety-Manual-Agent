@@ -32,6 +32,16 @@
         </label>
 
         <label class="field">
+          <span>SOW base</span>
+          <select id="sowBase">
+            <option value="Tower/Elevated">Tower/Elevated</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Civil">Civil</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+
+        <label class="field">
           <span>Manual text or notes</span>
           <textarea id="manualText" placeholder="Paste manual text here for no-key testing, or leave blank when uploading a PDF with OpenAI mode."></textarea>
         </label>
@@ -50,16 +60,6 @@
         <label class="field">
           <span>Company context</span>
           <input id="companyContext" value="Cell tower construction, maintenance, repair, inspection, and managed field work.">
-        </label>
-
-        <label class="field">
-          <span>SOW base</span>
-          <select id="sowBase">
-            <option value="Tower/Elevated">Tower/Elevated</option>
-            <option value="Electrical">Electrical</option>
-            <option value="Civil">Civil</option>
-            <option value="Other">Other</option>
-          </select>
         </label>
 
         <div class="actions">
