@@ -312,6 +312,8 @@ Work stops during lightning, unsafe wind, ice accumulation, or heat/cold stress 
 let selectedFile = null;
 let selectedFileBase64 = "";
 let lastResult = null;
+const maxDirectFileBytes = 2.5 * 1024 * 1024;
+const maxManualTextChars = 450000;
 
 const $ = (id) => document.getElementById(id);
 
@@ -336,7 +338,23 @@ async function handleFile(event) {
   if (!selectedFile) return;
 
   if (selectedFile.type.startsWith("text/") || /\.(txt|md|text)$/i.test(selectedFile.name)) {
+    if (selectedFile.size > maxManualTextChars) {
+      selectedFile = null;
+      event.target.value = "";
+      $("fileName").textContent = "Choose manual file";
+      renderError(`Text file is ${formatBytes(event.target.files[0].size)}. Hosted review supports pasted/extracted text up to about ${formatBytes(maxManualTextChars)} per request.`);
+      return;
+    }
     $("manualText").value = await selectedFile.text();
+    return;
+  }
+
+  if (selectedFile.size > maxDirectFileBytes) {
+    const actualSize = selectedFile.size;
+    selectedFile = null;
+    event.target.value = "";
+    $("fileName").textContent = "Choose manual file";
+    renderError(`PDF is ${formatBytes(actualSize)}. Hosted PDF review currently supports files up to ${formatBytes(maxDirectFileBytes)} because PDFs are sent as base64 JSON. For larger manuals, paste extracted text for now or run the app locally with a higher MAX_JSON_BODY_BYTES value.`);
     return;
   }
 
@@ -372,6 +390,14 @@ async function runReview() {
   renderLoading();
 
   try {
+    if (selectedFile && selectedFile.size > maxDirectFileBytes) {
+      throw new Error(`PDF is ${formatBytes(selectedFile.size)}. Hosted PDF review currently supports files up to ${formatBytes(maxDirectFileBytes)}.`);
+    }
+
+    if ($("manualText").value.length > maxManualTextChars) {
+      throw new Error(`Manual text is ${formatBytes($("manualText").value.length)}. Keep pasted text under about ${formatBytes(maxManualTextChars)} per hosted request.`);
+    }
+
     const payload = {
       apiKey: $("apiKey").value,
       model: $("model").value,
@@ -508,12 +534,17 @@ function exportJson() {
   URL.revokeObjectURL(url);
 }
 
+function formatBytes(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
+    .replaceAll('\"', "&quot;")
     .replaceAll("'", "&#039;");
 }
 
