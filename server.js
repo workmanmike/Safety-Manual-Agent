@@ -8,6 +8,8 @@ const publicDir = join(__dirname, "public");
 const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || "127.0.0.1";
 const maxJsonBodyBytes = Number(process.env.MAX_JSON_BODY_BYTES || 4 * 1024 * 1024);
+const maxUploadFileBytes = Number(process.env.MAX_UPLOAD_FILE_BYTES || 25 * 1024 * 1024);
+const maxMultipartBodyBytes = Number(process.env.MAX_MULTIPART_BODY_BYTES || 28 * 1024 * 1024);
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -50,6 +52,110 @@ function readJsonBody(req) {
     });
     req.on("error", reject);
   });
+}
+
+function readRawBody(req, maxBytes) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let total = 0;
+    let tooLarge = false;
+    req.on("data", (chunk) => {
+      if (tooLarge) return;
+      total += chunk.length;
+      if (total > maxBytes) {
+        tooLarge = true;
+        reject(new HttpError(413, `Request entity too large. Keep uploads under ${formatBytes(maxUploadFileBytes)}.`, {
+          maxBytes
+        }));
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on("end", () => {
+      if (!tooLarge) resolve(Buffer.concat(chunks));
+    });
+    req.on("error", reject);
+  });
+}
+
+async function readMultipartBody(req) {
+  const contentType = req.headers["content-type"] || "";
+  const boundaryMatch = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
+  if (!boundaryMatch) {
+    throw new HttpError(400, "Invalid multipart request: missing boundary.");
+  }
+
+  const boundary = boundaryMatch[1] || boundaryMatch[2];
+  const body = await readRawBody(req, maxMultipartBodyBytes);
+  return parseMultipart(body, boundary);
+}
+
+function parseMultipart(body, boundary) {
+  const delimiter = Buffer.from(`--${boundary}`);
+  const parts = [];
+  let cursor = body.indexOf(delimiter);
+
+  while (cursor !== -1) {
+    cursor += delimiter.length;
+    if (body.slice(cursor, cursor + 2).toString() === "--") break;
+    if (body.slice(cursor, cursor + 2).toString() === "\r\n") cursor += 2;
+
+    const headerEnd = body.indexOf(Buffer.from("\r\n\r\n"), cursor);
+    if (headerEnd === -1) break;
+
+    const rawHeaders = body.slice(cursor, headerEnd).toString("utf8");
+    const nextDelimiter = body.indexOf(delimiter, headerEnd + 4);
+    if (nextDelimiter === -1) break;
+
+    let contentEnd = nextDelimiter;
+    if (body.slice(contentEnd - 2, contentEnd).toString() === "\r\n") contentEnd -= 2;
+
+    const headers = Object.fromEntries(rawHeaders.split("\r\n").map((line) => {
+      const index = line.indexOf(":");
+      if (index === -1) return ["", ""];
+      return [line.slice(0, index).trim().toLowerCase(), line.slice(index + 1).trim()];
+    }).filter(([key]) => key));
+
+    const disposition = headers["content-disposition"] || "";
+    const name = disposition.match(/name="([^"]+)"/)?.[1];
+    const filename = disposition.match(/filename="([^"]*)"/)?.[1];
+    const content = body.slice(headerEnd + 4, contentEnd);
+
+    if (name) {
+      parts.push({
+        name,
+        filename,
+        contentType: headers["content-type"] || "application/octet-stream",
+        content
+      });
+    }
+
+    cursor = nextDelimiter;
+  }
+
+  const fields = {};
+  let file = null;
+
+  for (const part of parts) {
+    if (part.filename) {
+      file = {
+        name: part.filename,
+        type: part.contentType,
+        buffer: part.content
+      };
+    } else {
+      fields[part.name] = part.content.toString("utf8");
+    }
+  }
+
+  if (file && file.buffer.length > maxUploadFileBytes) {
+    throw new HttpError(413, `PDF is ${formatBytes(file.buffer.length)}. Upload limit is ${formatBytes(maxUploadFileBytes)}.`, {
+      maxBytes: maxUploadFileBytes,
+      actualBytes: file.buffer.length
+    });
+  }
+
+  return { fields, file };
 }
 
 function formatBytes(bytes) {
@@ -229,7 +335,12 @@ async function openAiReview(payload) {
   const model = String(payload.model || "gpt-5").trim();
   const content = [];
 
-  if (payload.file?.base64) {
+  if (payload.file?.fileId) {
+    content.push({
+      type: "input_file",
+      file_id: payload.file.fileId
+    });
+  } else if (payload.file?.base64) {
     content.push({
       type: "input_file",
       filename: payload.file.name || "manual.pdf",
@@ -248,6 +359,7 @@ async function openAiReview(payload) {
     "Treat fall protection, tower rescue, RF exposure, electrical/LOTO, rigging, weather, PPE, and JHA gaps as safety-significant.",
     "",
     `Company context: ${payload.companyContext || "Cell tower construction, maintenance, and managed field work."}`,
+    `SOW base: ${payload.sowBase || "Tower/Elevated"}`,
     "",
     "Playbook JSON:",
     JSON.stringify(playbook, null, 2)
@@ -305,13 +417,73 @@ async function openAiReview(payload) {
   return { mode: `OpenAI ${model}`, ...parsed };
 }
 
+async function uploadOpenAiFile({ apiKey, file }) {
+  const formData = new FormData();
+  const blob = new Blob([file.buffer], { type: file.type || "application/pdf" });
+  formData.append("file", blob, file.name || "manual.pdf");
+  formData.append("purpose", "user_data");
+
+  const response = await fetch("https://api.openai.com/v1/files", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: formData
+  });
+
+  const responseText = await response.text();
+  let responseJson;
+  try {
+    responseJson = responseText ? JSON.parse(responseText) : {};
+  } catch {
+    throw new HttpError(502, "OpenAI file upload returned a non-JSON response.", {
+      upstreamStatus: response.status,
+      upstreamBody: responseText.slice(0, 1000)
+    });
+  }
+
+  if (!response.ok) {
+    throw new HttpError(502, responseJson.error?.message || `OpenAI file upload failed with ${response.status}.`, {
+      upstreamStatus: response.status,
+      upstreamError: responseJson.error || responseJson
+    });
+  }
+
+  return responseJson.id;
+}
+
 async function handleApi(req, res) {
   try {
-    const payload = await readJsonBody(req);
+    const contentType = req.headers["content-type"] || "";
+    let payload;
+    let uploadedFile = null;
+
+    if (contentType.includes("multipart/form-data")) {
+      const multipart = await readMultipartBody(req);
+      payload = multipart.fields.payload ? JSON.parse(multipart.fields.payload) : {};
+      uploadedFile = multipart.file;
+    } else {
+      payload = await readJsonBody(req);
+    }
+
     const normalized = {
       ...payload,
       playbook: normalizePlaybook(payload.playbook)
     };
+
+    const apiKey = String(normalized.apiKey || process.env.OPENAI_API_KEY || "").trim();
+    if (uploadedFile) {
+      if (!apiKey) {
+        throw new HttpError(400, "PDF review requires an OpenAI API key. Paste extracted text to use local heuristic mode.");
+      }
+      const fileId = await uploadOpenAiFile({ apiKey, file: uploadedFile });
+      normalized.file = {
+        name: uploadedFile.name,
+        type: uploadedFile.type,
+        fileId
+      };
+    }
+
     const result = await openAiReview(normalized);
     sendJson(res, 200, result);
   } catch (error) {
