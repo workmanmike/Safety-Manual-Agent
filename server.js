@@ -15,21 +15,36 @@ const contentTypes = {
   ".json": "application/json; charset=utf-8"
 };
 
+class HttpError extends Error {
+  constructor(status, message, details = {}) {
+    super(message);
+    this.name = "HttpError";
+    this.status = status;
+    this.details = details;
+  }
+}
+
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
+    let tooLarge = false;
     req.on("data", (chunk) => {
+      if (tooLarge) return;
       body += chunk;
       if (body.length > 75 * 1024 * 1024) {
-        reject(new Error("Request is too large. Keep uploads under about 50 MB."));
-        req.destroy();
+        tooLarge = true;
+        body = "";
+        reject(new HttpError(413, "Request entity too large. Keep uploads under about 50 MB.", {
+          maxBytes: 75 * 1024 * 1024
+        }));
       }
     });
     req.on("end", () => {
+      if (tooLarge) return;
       try {
         resolve(body ? JSON.parse(body) : {});
       } catch {
-        reject(new Error("Invalid JSON request."));
+        reject(new HttpError(400, "Invalid JSON request."));
       }
     });
     req.on("error", reject);
@@ -260,10 +275,23 @@ async function openAiReview(payload) {
     })
   });
 
-  const responseJson = await response.json();
+  const responseText = await response.text();
+  let responseJson;
+  try {
+    responseJson = responseText ? JSON.parse(responseText) : {};
+  } catch {
+    throw new HttpError(502, "OpenAI returned a non-JSON response.", {
+      upstreamStatus: response.status,
+      upstreamBody: responseText.slice(0, 1000)
+    });
+  }
+
   if (!response.ok) {
     const message = responseJson.error?.message || `OpenAI request failed with ${response.status}.`;
-    throw new Error(message);
+    throw new HttpError(502, message, {
+      upstreamStatus: response.status,
+      upstreamError: responseJson.error || responseJson
+    });
   }
 
   const outputText = extractOutputText(responseJson);
@@ -281,7 +309,12 @@ async function handleApi(req, res) {
     const result = await openAiReview(normalized);
     sendJson(res, 200, result);
   } catch (error) {
-    sendJson(res, 400, { error: error.message || "Review failed." });
+    const status = Number(error.status || 400);
+    sendJson(res, status, {
+      error: error.message || "Review failed.",
+      status,
+      details: error.details || null
+    });
   }
 }
 
@@ -312,7 +345,27 @@ async function serveStatic(req, res) {
 }
 
 const server = createServer((req, res) => {
-  if (req.method === "POST" && req.url === "/api/review") {
+  const url = new URL(req.url || "/", `http://${host}:${port}`);
+
+  if (url.pathname.startsWith("/api/") && url.pathname !== "/api/review") {
+    sendJson(res, 404, {
+      error: "API route not found.",
+      status: 404,
+      path: url.pathname
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/review" && req.method !== "POST") {
+    sendJson(res, 405, {
+      error: "Method not allowed. Use POST for /api/review.",
+      status: 405,
+      method: req.method
+    });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/review") {
     handleApi(req, res);
     return;
   }
@@ -320,8 +373,11 @@ const server = createServer((req, res) => {
     serveStatic(req, res);
     return;
   }
-  res.writeHead(405);
-  res.end("Method not allowed");
+  sendJson(res, 405, {
+    error: "Method not allowed.",
+    status: 405,
+    method: req.method
+  });
 });
 
 server.on("error", (error) => {
