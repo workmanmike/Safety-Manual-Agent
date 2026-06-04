@@ -6,9 +6,9 @@ A local prototype for reviewing telecom and cell tower safety manuals against a 
 
 - Upload a PDF manual for OpenAI-powered review.
 - Paste TXT/MD/manual text for local no-key testing.
-- Edit the tower-safety playbook as JSON.
-- Grade each playbook requirement as pass, partial, fail, not applicable, or needs review.
-- Show evidence, citations, recommendations, confidence, and a short operational risk memo.
+- Edit the telecom installation safety playbook as JSON.
+- Grade each requirement as pass, partial, fail, not applicable, or needs review.
+- Show evidence, citations, standards references, standard gaps, recommendations, confidence, and a short operational risk memo.
 - Export the review as JSON.
 
 ## Run locally
@@ -22,6 +22,12 @@ Then open:
 ```text
 http://127.0.0.1:4173
 ```
+
+## Playbook
+
+The default playbook covers visible Telecom Installation safety topics including fall protection, tower safety, RF/EME, rigging, cranes, electrical, LOTO, excavation, silica, PPE, emergency action planning, subcontractor management, and related field-safety programs.
+
+Each topic includes required program elements and standards references such as OSHA 29 CFR 1926 and ANSI/ASSP A10.48 where applicable. The agent should check for complete program coverage, not just whether a heading exists.
 
 ## OpenAI mode
 
