@@ -392,8 +392,17 @@ async function runReview() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "Review failed.");
+    const responseText = await response.text();
+    let result;
+    try {
+      result = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      throw new Error(`Server returned non-JSON response (${response.status}): ${responseText.slice(0, 400)}`);
+    }
+    if (!response.ok) {
+      const details = result.details ? ` ${JSON.stringify(result.details)}` : "";
+      throw new Error(`${result.error || "Review failed."}${details}`);
+    }
     lastResult = result;
     $("runMode").textContent = result.mode || "Review complete";
     $("exportJson").disabled = false;
