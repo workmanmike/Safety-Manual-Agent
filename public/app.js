@@ -1,84 +1,295 @@
+const commonProgramElements = [
+  "scope and applicability",
+  "roles and responsibilities",
+  "training or qualification requirements",
+  "hazard controls and required procedures",
+  "PPE or equipment requirements",
+  "inspection or pre-use checks",
+  "emergency response where applicable",
+  "records or documentation requirements"
+];
+
+function topic({ id, category, severity = "High", standardsRefs = [], requiredEvidence = [], requiredProgramElements = [] }) {
+  const elements = [...commonProgramElements, ...requiredProgramElements];
+  return {
+    id,
+    category,
+    requirement: `The manual contains a complete ${category} program section for telecom installation work.`,
+    severity,
+    standardsRefs,
+    requiredProgramElements: elements,
+    passCriteria: `Fully covers ${elements.join(", ")} and aligns with the listed OSHA/ANSI references where applicable.`,
+    partialCriteria: "Mentions the topic but omits one or more required program elements, work controls, qualifications, or records.",
+    failCriteria: "No meaningful manual section or enforceable procedure for this topic.",
+    requiredEvidence
+  };
+}
+
 const defaultPlaybook = [
-  {
+  topic({
+    id: "BBP-001",
+    category: "Bloodborne Pathogens (BBP)",
+    severity: "Medium",
+    standardsRefs: ["OSHA 29 CFR 1910.1030 where occupational exposure exists"],
+    requiredEvidence: ["bloodborne pathogens", "exposure control", "biohazard", "sharps", "post-exposure", "hepatitis B"],
+    requiredProgramElements: ["exposure determination", "post-exposure response", "medical follow-up"]
+  }),
+  topic({
+    id: "CHEM-001",
+    category: "Chemical Safety",
+    severity: "High",
+    standardsRefs: ["OSHA 29 CFR 1926.59 / 1910.1200 Hazard Communication"],
+    requiredEvidence: ["hazard communication", "SDS", "chemical inventory", "label", "secondary container", "spill"],
+    requiredProgramElements: ["chemical inventory", "SDS access", "container labeling", "spill response"]
+  }),
+  topic({
+    id: "CS-001",
+    category: "Confined Space",
+    severity: "Critical",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart AA"],
+    requiredEvidence: ["confined space", "permit-required", "atmospheric testing", "entrant", "attendant", "rescue"],
+    requiredProgramElements: ["permit evaluation", "atmospheric monitoring", "entry roles", "rescue planning"]
+  }),
+  topic({
+    id: "CRN-001",
+    category: "Crane Operation",
+    severity: "Critical",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart CC", "ANSI/ASSP A10.48 communication structure work"],
+    requiredEvidence: ["crane", "operator certification", "lift plan", "load chart", "signal person", "power line"],
+    requiredProgramElements: ["operator qualification", "lift planning", "ground conditions", "signal person controls", "power-line clearance"]
+  }),
+  topic({
+    id: "DA-001",
+    category: "Drug and Alcohol",
+    severity: "High",
+    standardsRefs: ["Company policy and applicable DOT/customer requirements"],
+    requiredEvidence: ["drug", "alcohol", "fit for duty", "impairment", "testing", "reasonable suspicion"],
+    requiredProgramElements: ["fit-for-duty rules", "prohibited conduct", "testing or removal process", "supervisor escalation"]
+  }),
+  topic({
+    id: "ELEC-001",
+    category: "Electrical",
+    severity: "Critical",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart K"],
+    requiredEvidence: ["electrical", "energized", "de-energized", "GFCI", "temporary power", "grounding"],
+    requiredProgramElements: ["energized-work restrictions", "temporary power controls", "GFCI use", "approach boundaries"]
+  }),
+  topic({
+    id: "ELEC-Q-001",
+    category: "Electrical (Qualified)",
+    severity: "Critical",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart K"],
+    requiredEvidence: ["qualified person", "electrical qualified", "training", "authorization", "energized equipment"],
+    requiredProgramElements: ["qualified-person definition", "authorization limits", "task-specific training", "unqualified-worker restrictions"]
+  }),
+  topic({
+    id: "ARC-001",
+    category: "Electrical (Qualified): Electrical Arc Safety",
+    severity: "Critical",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart K", "NFPA 70E where adopted by company policy"],
+    requiredEvidence: ["arc flash", "arc rated", "incident energy", "shock boundary", "flash boundary", "energized work permit"],
+    requiredProgramElements: ["arc hazard assessment", "arc-rated PPE", "energized-work approval", "shock and arc boundaries"]
+  }),
+  topic({
+    id: "AEGCP-001",
+    category: "Electrical Equipment Grounding Assurance",
+    severity: "High",
+    standardsRefs: ["OSHA 29 CFR 1926.404"],
+    requiredEvidence: ["assured equipment grounding", "grounding conductor", "continuity test", "GFCI", "cord inspection"],
+    requiredProgramElements: ["cord and tool inspection", "test frequency", "failed-equipment removal", "GFCI or grounding program"]
+  }),
+  topic({
+    id: "EAP-001",
+    category: "Emergency Action Plan",
+    severity: "Critical",
+    standardsRefs: ["OSHA 29 CFR 1926.35"],
+    requiredEvidence: ["emergency action plan", "evacuation", "assembly area", "emergency contact", "alarm", "site emergency"],
+    requiredProgramElements: ["emergency contacts", "evacuation routes", "site access for responders", "communication method"]
+  }),
+  topic({
     id: "FP-001",
     category: "Fall Protection",
-    requirement: "The manual requires 100 percent fall protection while climbing or working at height.",
     severity: "Critical",
-    passCriteria: "Requires continuous tie-off or equivalent fall protection for tower climbing and elevated work.",
-    partialCriteria: "Mentions fall protection but does not clearly require continuous protection.",
-    failCriteria: "Does not require fall protection or allows unsupported free climbing.",
-    requiredEvidence: ["100% tie-off", "continuous fall protection", "fall arrest", "anchorage", "climbing"]
-  },
-  {
-    id: "RES-001",
-    category: "Tower Rescue",
-    requirement: "The manual includes a tower rescue plan with trained rescuers and rescue equipment.",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart M", "ANSI/ASSP A10.48 communication structure work"],
+    requiredEvidence: ["100% tie-off", "continuous fall protection", "fall arrest", "anchorage", "rescue", "competent person"],
+    requiredProgramElements: ["100 percent tie-off expectation", "anchorage criteria", "equipment inspection", "competent-person oversight", "fall rescue"]
+  }),
+  topic({
+    id: "FIRE-001",
+    category: "Fire Protection",
+    severity: "High",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart F"],
+    requiredEvidence: ["fire protection", "extinguisher", "flammable", "combustible", "fuel storage", "fire watch"],
+    requiredProgramElements: ["extinguisher availability", "flammable storage", "ignition control", "fire watch triggers"]
+  }),
+  topic({
+    id: "FA-001",
+    category: "First Aid",
+    severity: "High",
+    standardsRefs: ["OSHA 29 CFR 1926.50"],
+    requiredEvidence: ["first aid", "CPR", "medical services", "first aid kit", "AED", "emergency medical"],
+    requiredProgramElements: ["first-aid availability", "medical response access", "first-aid kit inspection", "CPR/AED expectations"]
+  }),
+  topic({
+    id: "GEN-001",
+    category: "General Programs",
+    severity: "High",
+    standardsRefs: ["OSHA 29 CFR 1926 general construction safety obligations", "ANSI/ASSP A10.48 safety practices"],
+    requiredEvidence: ["safety policy", "responsibilities", "training", "discipline", "inspection", "continuous improvement"],
+    requiredProgramElements: ["management responsibilities", "employee responsibilities", "disciplinary policy", "program review"]
+  }),
+  topic({
+    id: "HIRA-001",
+    category: "Hazard Identification, Risk Assessment and Control",
     severity: "Critical",
-    passCriteria: "Requires a rescue plan, rescue-trained personnel, and accessible rescue equipment before work begins.",
-    partialCriteria: "Mentions rescue but lacks training, equipment, or timing requirements.",
-    failCriteria: "No tower rescue procedure or rescue readiness requirement.",
-    requiredEvidence: ["rescue plan", "rescue kit", "trained rescuer", "emergency response", "EMS"]
-  },
-  {
-    id: "RF-001",
-    category: "RF Exposure",
-    requirement: "The manual controls RF exposure before and during tower work.",
+    standardsRefs: ["ANSI/ASSP A10.48 planning and hazard control practices", "OSHA 29 CFR 1926 applicable hazard controls"],
+    requiredEvidence: ["hazard assessment", "risk assessment", "JHA", "pre-task", "control measures", "hierarchy of controls"],
+    requiredProgramElements: ["pre-task hazard assessment", "control selection", "crew communication", "changing-condition reassessment"]
+  }),
+  topic({
+    id: "HME-001",
+    category: "Heavy Mobile Equipment Operation",
     severity: "High",
-    passCriteria: "Requires RF assessment, coordination/shutdown where needed, signage, and controlled access.",
-    partialCriteria: "Mentions RF hazards but lacks specific controls.",
-    failCriteria: "No RF exposure control process.",
-    requiredEvidence: ["RF exposure", "radio frequency", "shutdown", "monitor", "controlled area", "signage"]
-  },
-  {
-    id: "JHA-001",
-    category: "Pre-task Planning",
-    requirement: "The manual requires a documented JHA or tailboard before field work.",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart O"],
+    requiredEvidence: ["heavy equipment", "mobile equipment", "spotter", "backup alarm", "seat belt", "equipment inspection"],
+    requiredProgramElements: ["operator authorization", "pre-use inspection", "spotter/backing controls", "pedestrian separation"]
+  }),
+  topic({
+    id: "HOT-001",
+    category: "Hot Work",
     severity: "High",
-    passCriteria: "Requires documented hazard assessment with crew review before starting work.",
-    partialCriteria: "Mentions hazard awareness but not a documented pre-task process.",
-    failCriteria: "No pre-task hazard planning requirement.",
-    requiredEvidence: ["JHA", "job hazard analysis", "tailboard", "pre-task", "hazard assessment"]
-  },
-  {
-    id: "RIG-001",
-    category: "Rigging and Hoisting",
-    requirement: "The manual defines safe hoisting and rigging controls for tower work.",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart J", "OSHA 29 CFR 1926 Subpart F"],
+    requiredEvidence: ["hot work", "welding", "cutting", "burning", "fire watch", "hot work permit"],
+    requiredProgramElements: ["permit or authorization process", "fire watch", "combustible control", "cylinder handling"]
+  }),
+  topic({
+    id: "INV-001",
+    category: "Incident Investigation",
     severity: "High",
-    passCriteria: "Requires qualified riggers, lift planning, equipment inspection, tag lines, and dropped-object controls.",
-    partialCriteria: "Mentions hoisting or rigging but lacks specific controls.",
-    failCriteria: "No hoisting or rigging safety requirements.",
-    requiredEvidence: ["rigging", "hoisting", "qualified rigger", "lift plan", "tag line", "dropped object"]
-  },
-  {
-    id: "ELEC-001",
-    category: "Electrical and LOTO",
-    requirement: "The manual requires lockout/tagout and electrical hazard controls.",
+    standardsRefs: ["OSHA recordkeeping where applicable", "Company incident management requirements"],
+    requiredEvidence: ["incident investigation", "near miss", "root cause", "corrective action", "reporting", "lessons learned"],
+    requiredProgramElements: ["reporting thresholds", "investigation roles", "root-cause process", "corrective-action tracking"]
+  }),
+  topic({
+    id: "LAD-001",
+    category: "Ladders",
     severity: "High",
-    passCriteria: "Requires LOTO, verification of de-energization, and boundaries around energized equipment.",
-    partialCriteria: "Mentions electrical safety without a clear LOTO process.",
-    failCriteria: "No electrical isolation or LOTO requirement.",
-    requiredEvidence: ["lockout", "tagout", "LOTO", "de-energized", "electrical hazard", "grounding"]
-  },
-  {
-    id: "WX-001",
-    category: "Weather",
-    requirement: "The manual sets weather limits for tower work.",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart X"],
+    requiredEvidence: ["ladder", "extension ladder", "step ladder", "three points of contact", "inspection", "secured"],
+    requiredProgramElements: ["ladder selection", "inspection", "setup and securing", "defective ladder removal"]
+  }),
+  topic({
+    id: "LOTO-001",
+    category: "Lockout/Tagout",
+    severity: "Critical",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart K", "OSHA 29 CFR 1910.147 where applicable"],
+    requiredEvidence: ["lockout", "tagout", "LOTO", "energy isolation", "zero energy", "verification"],
+    requiredProgramElements: ["energy-control steps", "authorized employees", "verification of isolation", "release from lockout"]
+  }),
+  topic({
+    id: "MEWP-001",
+    category: "Mobile Elevating Work Platforms (MEWPs)",
+    severity: "High",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart L and applicable ANSI A92 requirements"],
+    requiredEvidence: ["MEWP", "aerial lift", "boom lift", "scissor lift", "fall restraint", "platform inspection"],
+    requiredProgramElements: ["operator training", "pre-use inspection", "fall protection in platform", "ground/slope limits"]
+  }),
+  topic({
+    id: "NOISE-001",
+    category: "Noise Exposure",
     severity: "Medium",
-    passCriteria: "Defines stop-work limits for lightning, wind, ice, and heat/cold stress.",
-    partialCriteria: "Mentions weather but not clear work limits.",
-    failCriteria: "No weather-related stop-work guidance.",
-    requiredEvidence: ["lightning", "wind", "ice", "heat stress", "cold stress", "stop work"]
-  },
-  {
+    standardsRefs: ["OSHA 29 CFR 1926.52", "OSHA 29 CFR 1926.101"],
+    requiredEvidence: ["noise", "hearing protection", "audiometric", "hearing conservation", "decibel", "ear plugs"],
+    requiredProgramElements: ["noise assessment", "hearing protection", "hearing conservation trigger", "training"]
+  }),
+  topic({
+    id: "PIT-001",
+    category: "Powered Industrial Trucks / Lift Trucks",
+    severity: "High",
+    standardsRefs: ["OSHA 29 CFR 1926.602", "OSHA 29 CFR 1910.178 where applicable"],
+    requiredEvidence: ["forklift", "powered industrial truck", "lift truck", "operator training", "forks", "load capacity"],
+    requiredProgramElements: ["operator authorization", "daily inspection", "load handling", "pedestrian controls"]
+  }),
+  topic({
     id: "PPE-001",
-    category: "PPE",
-    requirement: "The manual lists required PPE for tower field work.",
+    category: "PPE (Personal Protective Equipment)",
+    severity: "High",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart E"],
+    requiredEvidence: ["PPE", "hard hat", "gloves", "eye protection", "boots", "harness", "hazard assessment"],
+    requiredProgramElements: ["PPE hazard assessment", "minimum site PPE", "task-specific PPE", "inspection and replacement"]
+  }),
+  topic({
+    id: "RF-001",
+    category: "Radio-Frequency (RF) Safety / Electromagnetic Energy (EME)",
+    severity: "Critical",
+    standardsRefs: ["FCC RF exposure requirements", "ANSI/ASSP A10.48 communication structure work"],
+    requiredEvidence: ["RF exposure", "EME", "radio frequency", "shutdown", "monitor", "controlled area", "signage"],
+    requiredProgramElements: ["RF hazard assessment", "carrier coordination", "shutdown or power reduction", "monitoring", "controlled access"]
+  }),
+  topic({
+    id: "REC-001",
+    category: "Records Retention",
     severity: "Medium",
-    passCriteria: "Defines PPE including hard hat, gloves, eye protection, footwear, and fall protection gear.",
-    partialCriteria: "Lists general PPE but misses tower-specific gear.",
-    failCriteria: "No PPE requirements.",
-    requiredEvidence: ["PPE", "hard hat", "gloves", "eye protection", "boots", "harness"]
-  }
+    standardsRefs: ["OSHA documentation and recordkeeping requirements where applicable", "Company/customer retention requirements"],
+    requiredEvidence: ["records retention", "training records", "inspection records", "incident records", "audit", "document control"],
+    requiredProgramElements: ["record types", "retention periods", "record owner", "retrieval process"]
+  }),
+  topic({
+    id: "RIG-001",
+    category: "Rigging/Material Handling",
+    severity: "Critical",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart H", "OSHA 29 CFR 1926 Subpart CC", "ANSI/ASSP A10.48 communication structure work"],
+    requiredEvidence: ["rigging", "material handling", "qualified rigger", "sling", "tag line", "dropped object", "lift plan"],
+    requiredProgramElements: ["qualified rigger criteria", "rigging inspection", "load control", "dropped-object prevention", "lift planning"]
+  }),
+  topic({
+    id: "SIL-001",
+    category: "Silica Exposure Control",
+    severity: "High",
+    standardsRefs: ["OSHA 29 CFR 1926.1153"],
+    requiredEvidence: ["silica", "respirable crystalline silica", "Table 1", "dust control", "respirator", "exposure control plan"],
+    requiredProgramElements: ["exposure control plan", "engineering controls", "respiratory protection triggers", "housekeeping"]
+  }),
+  topic({
+    id: "SWA-001",
+    category: "Stop Work Authorization",
+    severity: "Critical",
+    standardsRefs: ["ANSI/ASSP A10.48 safety management expectations", "Company/customer stop-work requirements"],
+    requiredEvidence: ["stop work", "stop-work authority", "unsafe condition", "no retaliation", "restart", "escalation"],
+    requiredProgramElements: ["who may stop work", "no-retaliation language", "restart approval", "escalation path"]
+  }),
+  topic({
+    id: "SUB-001",
+    category: "Subcontractor Safety Management",
+    severity: "High",
+    standardsRefs: ["OSHA multi-employer worksite policy considerations", "ANSI/ASSP A10.48 contractor coordination practices"],
+    requiredEvidence: ["subcontractor", "contractor", "prequalification", "orientation", "oversight", "site safety"],
+    requiredProgramElements: ["prequalification", "site orientation", "coordination responsibilities", "performance monitoring"]
+  }),
+  topic({
+    id: "TOOL-001",
+    category: "Tool Safety",
+    severity: "High",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart I"],
+    requiredEvidence: ["tool safety", "hand tools", "power tools", "guard", "inspection", "defective tool"],
+    requiredProgramElements: ["tool inspection", "guarding", "defective-tool removal", "manufacturer instructions"]
+  }),
+  topic({
+    id: "TOWER-001",
+    category: "Tower Safety",
+    severity: "Critical",
+    standardsRefs: ["ANSI/ASSP A10.48 communication structure work", "OSHA 29 CFR 1926 applicable construction standards"],
+    requiredEvidence: ["tower", "climber", "competent person", "100% tie-off", "rescue plan", "RF", "rigging plan"],
+    requiredProgramElements: ["climber authorization", "competent-person oversight", "site-specific plan", "rescue readiness", "RF and rigging coordination"]
+  }),
+  topic({
+    id: "EXC-001",
+    category: "Trenching & Excavation",
+    severity: "Critical",
+    standardsRefs: ["OSHA 29 CFR 1926 Subpart P"],
+    requiredEvidence: ["trenching", "excavation", "competent person", "protective system", "shoring", "sloping", "underground utilities"],
+    requiredProgramElements: ["competent-person inspection", "utility locating", "protective systems", "access/egress", "spoils and water controls"]
+  })
 ];
 
 const sampleManual = `Tower Operations Safety Manual
@@ -251,6 +462,8 @@ function stat(label, value) {
 function renderFinding(item) {
   const grade = String(item.grade || "needs_review");
   const evidence = Array.isArray(item.evidence) ? item.evidence : [];
+  const standardsRefs = Array.isArray(item.standardsRefs) ? item.standardsRefs : [];
+  const standardGaps = Array.isArray(item.standardGaps) ? item.standardGaps : [];
   return `
     <article class="finding">
       <div class="finding-top">
@@ -262,10 +475,12 @@ function renderFinding(item) {
         <strong>${Math.round((item.score || 0) * 100)}%</strong>
       </div>
       <div class="finding-body">
+        ${standardsRefs.length ? `<div><strong>Standards:</strong> ${standardsRefs.map(escapeHtml).join("; ")}</div>` : ""}
         <div><strong>Citation:</strong> ${escapeHtml(item.citation || "No citation supplied")}</div>
         <div class="evidence">
           ${evidence.length ? evidence.map((line) => `<div class="quote">${escapeHtml(line)}</div>`).join("") : `<div class="quote">No evidence found.</div>`}
         </div>
+        ${standardGaps.length ? `<div><strong>Standard gaps:</strong> ${standardGaps.map(escapeHtml).join("; ")}</div>` : ""}
         <div><strong>Recommendation:</strong> ${escapeHtml(item.recommendation || "")}</div>
         <div class="meta">Confidence: ${escapeHtml(item.confidence || "none")} | Human review: ${item.needsHumanReview ? "required" : "optional"}</div>
       </div>
