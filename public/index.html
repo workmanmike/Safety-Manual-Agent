@@ -12,7 +12,15 @@
         <p class="eyebrow">Cell tower safety</p>
         <h1>Manual Review Agent</h1>
       </div>
-      <div class="status-pill" id="runMode">Local prototype</div>
+      <div class="topbar-actions">
+        <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">
+          <span class="toggle-track" aria-hidden="true">
+            <span class="toggle-thumb"></span>
+          </span>
+          <span id="themeLabel">Dark mode</span>
+        </button>
+        <div class="status-pill" id="runMode">Local prototype</div>
+      </div>
     </header>
 
     <main class="layout">
@@ -89,5 +97,40 @@
     </main>
 
     <script src="/app.js"></script>
+    <script>
+      (() => {
+        const toggle = document.getElementById("themeToggle");
+        const label = document.getElementById("themeLabel");
+
+        function getStoredTheme() {
+          try {
+            return window.localStorage?.getItem("theme") || "light";
+          } catch {
+            return "light";
+          }
+        }
+
+        function storeTheme(theme) {
+          try {
+            window.localStorage?.setItem("theme", theme);
+          } catch {
+          }
+        }
+
+        function applyTheme(theme) {
+          const isDark = theme === "dark";
+          document.body.classList.toggle("dark", isDark);
+          toggle.setAttribute("aria-pressed", String(isDark));
+          label.textContent = isDark ? "Light mode" : "Dark mode";
+        }
+
+        applyTheme(getStoredTheme());
+        toggle.addEventListener("click", () => {
+          const nextTheme = document.body.classList.contains("dark") ? "light" : "dark";
+          storeTheme(nextTheme);
+          applyTheme(nextTheme);
+        });
+      })();
+    </script>
   </body>
 </html>
