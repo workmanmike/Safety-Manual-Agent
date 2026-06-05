@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const publicDir = join(__dirname, "public");
 const port = Number(process.env.PORT || 4173);
-const host = process.env.HOST || "127.0.0.1";
+const host = process.env.HOST || (process.env.PORT ? "0.0.0.0" : "127.0.0.1");
 const maxJsonBodyBytes = Number(process.env.MAX_JSON_BODY_BYTES || 4 * 1024 * 1024);
 const maxUploadFileBytes = Number(process.env.MAX_UPLOAD_FILE_BYTES || 25 * 1024 * 1024);
 const maxMultipartBodyBytes = Number(process.env.MAX_MULTIPART_BODY_BYTES || 28 * 1024 * 1024);
