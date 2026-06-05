@@ -12,6 +12,20 @@
   --shadow: 0 18px 50px rgba(23, 68, 104, 0.14);
 }
 
+body.dark {
+  --bg: #081723;
+  --surface: #102334;
+  --ink: #eef8ff;
+  --muted: #a7bbcb;
+  --line: #2e4a5f;
+  --green: #20a99a;
+  --green-dark: #158174;
+  --amber: #d8922f;
+  --red: #f26d63;
+  --blue: #7db7ff;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -39,6 +53,12 @@ textarea {
   background: #174668;
   color: #fff;
   border-bottom: 5px solid #8fd3ff;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .eyebrow {
@@ -80,6 +100,38 @@ h3 {
   border-radius: 6px;
   color: #d9fbf5;
   font-weight: 800;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.toggle-track {
+  display: inline-flex;
+  align-items: center;
+  width: 42px;
+  height: 22px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.toggle-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.18s ease;
+}
+
+body.dark .toggle-thumb {
+  transform: translateX(20px);
 }
 
 .layout {
@@ -171,9 +223,9 @@ input,
 select,
 textarea {
   width: 100%;
-  border: 1px solid #c9d4ce;
+  border: 1px solid var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: var(--surface);
   color: var(--ink);
   outline: none;
 }
@@ -384,6 +436,37 @@ button:disabled {
   background: #fff2f0;
 }
 
+body.dark .topbar {
+  background: #07131d;
+  border-bottom-color: #2a91d8;
+}
+
+body.dark .dropzone,
+body.dark .stat,
+body.dark .finding-top,
+body.dark .quote,
+body.dark .secondary,
+body.dark .icon-button {
+  background: #142c40;
+  color: var(--ink);
+}
+
+body.dark .dropzone {
+  border-color: #3f6c8b;
+}
+
+body.dark .memo {
+  background: #3a2a12;
+}
+
+body.dark .error {
+  background: #351b1d;
+}
+
+body.dark .scorebox {
+  background: #07131d;
+}
+
 @media (max-width: 960px) {
   .layout,
   .report-header {
@@ -397,6 +480,11 @@ button:disabled {
   }
 
   .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .topbar-actions {
     align-items: flex-start;
     flex-direction: column;
   }
