@@ -415,6 +415,18 @@ async function runReview() {
     try {
       result = responseText ? JSON.parse(responseText) : {};
     } catch {
+      if (!selectedFile && $("manualText").value.trim()) {
+        result = clientHeuristicReview({
+          manualText: $("manualText").value,
+          playbook: payload.playbook,
+          apiError: `Server returned non-JSON response (${response.status}): ${responseText.slice(0, 240)}`
+        });
+        lastResult = result;
+        $("runMode").textContent = result.mode;
+        $("exportJson").disabled = false;
+        renderResults(result);
+        return;
+      }
       throw new Error(`Server returned non-JSON response (${response.status}): ${responseText.slice(0, 400)}`);
     }
     if (!response.ok) {
@@ -431,6 +443,75 @@ async function runReview() {
     button.disabled = false;
     button.textContent = "Run review";
   }
+}
+
+function clientHeuristicReview({ manualText, playbook, apiError }) {
+  const text = String(manualText || "");
+  const normalizedPlaybook = Array.isArray(playbook) ? playbook : [];
+  const findings = normalizedPlaybook.map((item, index) => {
+    const requiredEvidence = Array.isArray(item.requiredEvidence) ? item.requiredEvidence : [];
+    const requiredProgramElements = Array.isArray(item.requiredProgramElements) ? item.requiredProgramElements : [];
+    const terms = requiredEvidence.length
+      ? requiredEvidence
+      : String(item.requirement || "").split(/\W+/).filter((word) => word.length > 4).slice(0, 8);
+    const evidence = findClientEvidence(text, terms);
+    const score = terms.length ? evidence.length / terms.length : 0;
+    const grade = score >= 0.8 ? "pass" : score >= 0.35 ? "partial" : "fail";
+
+    return {
+      id: String(item.id || `REQ-${index + 1}`),
+      category: String(item.category || "General"),
+      requirement: String(item.requirement || ""),
+      severity: String(item.severity || "Medium"),
+      standardsRefs: Array.isArray(item.standardsRefs) ? item.standardsRefs : [],
+      grade,
+      score: Number(score.toFixed(2)),
+      evidence: evidence.slice(0, 3),
+      citation: evidence.length ? "Text match in pasted content" : "No evidence found in available text",
+      recommendation: grade === "pass"
+        ? "Keep this requirement as written and verify during human review."
+        : `Add clear language and evidence for: ${terms.slice(0, 4).join(", ")}.`,
+      standardGaps: grade === "pass" ? [] : requiredProgramElements.slice(0, 5),
+      confidence: "low",
+      needsHumanReview: true
+    };
+  });
+
+  const earned = findings.reduce((sum, item) => sum + (item.grade === "pass" ? 1 : item.grade === "partial" ? 0.5 : 0), 0);
+  const possible = findings.length;
+
+  return {
+    mode: "browser fallback",
+    summary: {
+      overallScore: possible ? Math.round((earned / possible) * 100) : 0,
+      pass: findings.filter((item) => item.grade === "pass").length,
+      partial: findings.filter((item) => item.grade === "partial").length,
+      fail: findings.filter((item) => item.grade === "fail").length,
+      needsReview: 0,
+      executiveSummary: `The hosted API is currently unavailable, so this is a browser-only heuristic review for pasted text. ${apiError}`
+    },
+    findings,
+    riskMemo: findings.filter((item) => item.grade !== "pass").slice(0, 5).map((item) => `${item.severity}: ${item.requirement}`)
+  };
+}
+
+function findClientEvidence(text, terms) {
+  const haystack = text.replace(/\s+/g, " ");
+  const lower = haystack.toLowerCase();
+  const matches = [];
+
+  for (const term of terms) {
+    const normalized = String(term).toLowerCase().trim();
+    if (!normalized) continue;
+    const index = lower.indexOf(normalized);
+    if (index >= 0) {
+      const start = Math.max(0, index - 100);
+      const end = Math.min(haystack.length, index + normalized.length + 140);
+      matches.push(haystack.slice(start, end).trim());
+    }
+  }
+
+  return matches;
 }
 
 function renderLoading() {
