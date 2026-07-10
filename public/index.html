@@ -1,136 +1,43 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tower Safety Manual Reviewer</title>
-    <link rel="stylesheet" href="/styles.css">
-  </head>
-  <body>
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Cell tower safety</p>
-        <h1>Manual Review Agent</h1>
-      </div>
-      <div class="topbar-actions">
-        <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">
-          <span class="toggle-track" aria-hidden="true">
-            <span class="toggle-thumb"></span>
-          </span>
-          <span id="themeLabel">Dark mode</span>
-        </button>
-        <div class="status-pill" id="runMode">Local prototype</div>
-      </div>
-    </header>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Evidence-based safety manual review for telecom field work.">
+  <title>Haven — Safety Manual Intelligence</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Haven home"><span class="brand-mark">H</span><span><b>Haven</b><small>Manual intelligence</small></span></a>
+    <div class="top-actions"><span class="local-status">● <span id="runMode">Local prototype</span></span><button id="themeToggle" class="quiet" type="button" aria-pressed="false"><span id="themeLabel">Dark mode</span></button></div>
+  </header>
 
-    <main class="layout">
-      <section class="panel left-panel">
-        <div class="section-head">
-          <div>
-            <h2>Manual</h2>
-            <p>Upload a PDF or paste extracted text for testing.</p>
-          </div>
-        </div>
+  <section class="hero">
+    <div><p class="eyebrow">SAFETY PROGRAM ASSURANCE</p><h1>Find what your manual<br><em>doesn’t say.</em></h1><p class="lede">Review telecom safety manuals against a structured field-safety playbook. Every finding shows the evidence, the gap, and the reference behind it.</p></div>
+    <div class="principles"><div><span>01</span><p><b>Evidence first</b><br>No unsupported compliance claims.</p></div><div><span>02</span><p><b>Human accountable</b><br>Every result stays reviewable.</p></div></div>
+  </section>
 
-        <label class="dropzone" for="manualFile">
-          <span class="drop-icon">+</span>
-          <strong id="fileName">Choose manual file</strong>
-          <span>PDF works with OpenAI mode. TXT and MD can be reviewed locally.</span>
-          <input id="manualFile" type="file" accept=".pdf,.txt,.md,.text,application/pdf,text/plain">
-        </label>
+  <main class="workspace">
+    <section class="intake">
+      <div class="section-head"><div><p class="kicker">INPUT</p><h2>Manual under review</h2></div><button id="loadSample" class="text-button">Load example</button></div>
+      <label class="dropzone" for="manualFile"><span class="upload-icon">↥</span><strong id="fileName">Choose manual file</strong><span>PDF, TXT, or Markdown · up to 25 MB</span><input id="manualFile" type="file" accept=".pdf,.txt,.md,.text,application/pdf,text/plain"></label>
+      <div class="separator"><span></span>OR PASTE TEXT<span></span></div>
+      <label class="sr-only" for="manualText">Manual text or notes</label><textarea id="manualText" placeholder="Paste the safety manual or a section here…"></textarea>
+      <div class="context-grid"><label class="field"><span>Scope of work</span><select id="sowBase"><option>Tower/Elevated</option><option>Electrical</option><option>Civil</option><option>Other</option></select></label><label class="field"><span>Company context</span><input id="companyContext" value="Cell tower construction, maintenance, repair, inspection, and managed field work."></label></div>
+      <details><summary>AI and playbook settings</summary><div class="settings"><label class="field"><span>OpenAI API key <small>optional</small></span><input id="apiKey" type="password" autocomplete="off" placeholder="Uses local screening when blank"></label><label class="field model"><span>Model</span><input id="model" value="gpt-5"></label></div><label class="field"><span>Review playbook (JSON)</span><textarea id="playbookEditor" spellcheck="false"></textarea></label><button id="resetPlaybook" class="text-button" type="button">Reset playbook</button></details>
+      <div class="actions"><button id="runReview" class="primary">Run manual review <span>→</span></button><button id="exportJson" class="secondary" disabled>Export JSON ↓</button></div>
+      <p class="disclaimer">Automated screening only. Not legal advice or a substitute for review by a qualified safety professional.</p>
+    </section>
 
-        <label class="field">
-          <span>SOW base</span>
-          <select id="sowBase">
-            <option value="Tower/Elevated">Tower/Elevated</option>
-            <option value="Electrical">Electrical</option>
-            <option value="Civil">Civil</option>
-            <option value="Other">Other</option>
-          </select>
-        </label>
-
-        <label class="field">
-          <span>Manual text or notes</span>
-          <textarea id="manualText" placeholder="Paste manual text here for no-key testing, or leave blank when uploading a PDF with OpenAI mode."></textarea>
-        </label>
-
-        <div class="grid two">
-          <label class="field">
-            <span>OpenAI API key</span>
-            <input id="apiKey" type="password" placeholder="Optional; kept in this browser session">
-          </label>
-          <label class="field">
-            <span>Model</span>
-            <input id="model" value="gpt-5">
-          </label>
-        </div>
-
-        <label class="field">
-          <span>Company context</span>
-          <input id="companyContext" value="Cell tower construction, maintenance, repair, inspection, and managed field work.">
-        </label>
-
-        <div class="actions">
-          <button id="runReview" class="primary">Run review</button>
-          <button id="loadSample" class="secondary">Load sample manual text</button>
-          <button id="exportJson" class="secondary" disabled>Export JSON</button>
-        </div>
-      </section>
-
-      <section class="panel playbook-panel">
-        <div class="section-head">
-          <div>
-            <h2>Playbook</h2>
-            <p>Edit requirements as JSON. Each item becomes one graded checkpoint.</p>
-          </div>
-          <button id="resetPlaybook" class="icon-button" title="Reset playbook">Reset</button>
-        </div>
-        <textarea id="playbookEditor" spellcheck="false"></textarea>
-      </section>
-
-      <section class="results" id="results">
-        <div class="empty-state">
-          <h2>Ready to grade</h2>
-          <p>The report will show score, critical gaps, citations, and recommended fixes.</p>
-        </div>
-      </section>
-    </main>
-
-    <script src="/app.js"></script>
-    <script>
-      (() => {
-        const toggle = document.getElementById("themeToggle");
-        const label = document.getElementById("themeLabel");
-
-        function getStoredTheme() {
-          try {
-            return window.localStorage?.getItem("theme") || "light";
-          } catch {
-            return "light";
-          }
-        }
-
-        function storeTheme(theme) {
-          try {
-            window.localStorage?.setItem("theme", theme);
-          } catch {
-          }
-        }
-
-        function applyTheme(theme) {
-          const isDark = theme === "dark";
-          document.body.classList.toggle("dark", isDark);
-          toggle.setAttribute("aria-pressed", String(isDark));
-          label.textContent = isDark ? "Light mode" : "Dark mode";
-        }
-
-        applyTheme(getStoredTheme());
-        toggle.addEventListener("click", () => {
-          const nextTheme = document.body.classList.contains("dark") ? "light" : "dark";
-          storeTheme(nextTheme);
-          applyTheme(nextTheme);
-        });
-      })();
-    </script>
-  </body>
+    <section class="results" id="results">
+      <div class="empty-state"><div class="radar"><i></i><b>H</b></div><p class="kicker">READY TO REVIEW</p><h2>Your findings will appear here</h2><p>Upload or paste a manual, then run the review to see coverage, cited evidence, and priority gaps.</p><div class="legend"><span><i class="pass"></i>Covered</span><span><i class="partial"></i>Partial</span><span><i class="fail"></i>Gap</span></div></div>
+    </section>
+  </main>
+  <footer><span>HAVEN / MANUAL INTELLIGENCE</span><span>Telecom construction playbook · Human review required</span></footer>
+  <script src="/app.js"></script>
+  <script>
+    (()=>{const toggle=document.getElementById('themeToggle'),label=document.getElementById('themeLabel');const apply=t=>{const dark=t==='dark';document.body.classList.toggle('dark',dark);toggle.setAttribute('aria-pressed',String(dark));label.textContent=dark?'Light mode':'Dark mode'};let stored='light';try{stored=localStorage.getItem('theme')||'light'}catch{}apply(stored);toggle.addEventListener('click',()=>{const next=document.body.classList.contains('dark')?'light':'dark';try{localStorage.setItem('theme',next)}catch{}apply(next)})})();
+  </script>
+</body>
 </html>
