@@ -292,22 +292,13 @@ const defaultPlaybook = [
   })
 ];
 
-const sampleManual = `Tower Operations Safety Manual
+const sampleManual = `Demonstration Telecom Safety Manual
 
-All climbing work requires continuous fall protection. Climbers must maintain 100% tie-off while ascending, descending, and working from the structure. Harnesses, lanyards, fall arrest systems, and anchorage points must be inspected before use.
+This example describes a mature safety program for cell tower construction, electrical, and civil work. Management assigns roles and responsibilities, qualified supervisors authorize work, employees receive task-specific training, required PPE and equipment are inspected before use, emergency response is planned, and training and inspection records are retained.
 
-Before field work starts, the crew lead will conduct a documented JHA and tailboard meeting. The team must review site hazards, access limits, weather, equipment, and stop-work authority.
-
-Tower rescue readiness is required before climbing. A rescue plan, rescue kit, and at least one trained rescuer must be available on site. Emergency response access and EMS contact information must be confirmed.
-
-RF exposure must be assessed before work. The supervisor will coordinate radio shutdowns or controlled area restrictions when RF exposure may exceed limits. RF signage and monitor readings must be reviewed.
-
-Rigging and hoisting tasks require a lift plan, qualified rigger, inspected equipment, tag lines when practical, and dropped-object controls.
-
-Electrical work requires lockout/tagout. Equipment must be de-energized and verified before work unless an approved energized-work plan is used.
-
-Work stops during lightning, unsafe wind, ice accumulation, or heat/cold stress conditions that cannot be controlled.
-`;
+` + defaultPlaybook.map((item) => `${item.category}
+This program applies to all affected employees and subcontractors. A competent or qualified person, as applicable, is responsible for planning, training, authorization, pre-use inspection, hazard controls, emergency response, and documentation. Required controls include ${item.requiredProgramElements.join(", ")}. The program specifically addresses ${item.requiredEvidence.join(", ")}. Defective equipment is removed from service, changing conditions require reassessment, and completed inspections and training are documented.
+`).join("\n");
 
 let selectedFile = null;
 let selectedFileBase64 = "";
@@ -491,8 +482,25 @@ function clientHeuristicReview({ manualText, playbook, apiError }) {
       executiveSummary: `The hosted API is currently unavailable, so this is a browser-only heuristic review for pasted text. ${apiError}`
     },
     findings,
-    riskMemo: findings.filter((item) => item.grade !== "pass").slice(0, 5).map((item) => `${item.severity}: ${item.requirement}`)
+    riskMemo: findings.filter((item) => item.grade !== "pass").slice(0, 5).map(operationalRisk)
   };
+}
+
+function operationalRisk(item) {
+  const risks = {
+    "FP-001": "Workers may climb without reliable tie-off, anchorage, inspection, or rescue controls, increasing the likelihood of a fatal fall and a delayed rescue.",
+    "RF-001": "Crews may enter active RF fields without shutdown coordination or monitoring, creating uncontrolled exposure and possible injury.",
+    "RIG-001": "Unqualified rigging decisions or uninspected gear may cause dropped loads, struck-by injuries, equipment loss, and tower damage.",
+    "ELEC-001": "Unclear electrical controls can lead to contact with energized parts, shock, arc injury, fire, or unplanned service interruption.",
+    "LOTO-001": "Hazardous energy may be restored or remain present during work, exposing employees to electrocution, crushing, or unexpected startup.",
+    "TOWER-001": "Tower work may proceed without authorized climbers, competent oversight, rescue readiness, or coordinated RF and rigging controls.",
+    "EAP-001": "Crews may lose critical response time during an emergency because evacuation, communication, responder access, and contacts are undefined.",
+    "CS-001": "An unrecognized or uncontrolled confined-space atmosphere can cause incapacitation or fatality and expose rescuers to the same hazard.",
+    "CRN-001": "Lifts may proceed without qualified operators, ground assessment, load controls, or power-line clearance, risking collapse or fatal struck-by events.",
+    "EXC-001": "Excavation work may proceed without utility locating, protective systems, or safe access, risking cave-in, electrocution, or engulfment."
+  };
+  const consequence = risks[item.id] || `Accepting this gap leaves ${item.category.toLowerCase()} hazards without a complete, enforceable control process, increasing the chance of injury, work stoppage, inconsistent field decisions, and regulatory or customer exposure.`;
+  return `${item.severity} — ${item.category}: ${consequence}`;
 }
 
 function findClientEvidence(text, terms) {
@@ -622,3 +630,4 @@ function escapeHtml(value) {
 }
 
 init();
+
