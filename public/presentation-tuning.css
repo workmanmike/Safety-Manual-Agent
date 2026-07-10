@@ -1,0 +1,16 @@
+.topbar { height: 92px; }
+.brand { gap: 15px; }
+.brand-mark { width: 52px; height: 52px; font-size: 29px; }
+.brand b { font-size: 29px; }
+.brand small { font-size: 10px; }
+.hero .eyebrow { font-size: 14px; letter-spacing: .18em; margin-bottom: 18px; }
+.memo { font-size: 12px; line-height: 1.55; }
+.memo p { margin: 7px 0 0; }
+
+@media (max-width: 560px) {
+  .topbar { height: 82px; }
+  .brand-mark { width: 44px; height: 44px; font-size: 25px; }
+  .brand b { font-size: 25px; }
+  .hero .eyebrow { font-size: 12px; }
+}
+
