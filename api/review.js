@@ -230,8 +230,25 @@ function heuristicReview({ manualText, playbook }) {
       needsReview: findings.filter((item) => item.grade === "needs_review").length
     },
     findings,
-    riskMemo: findings.filter((item) => item.grade !== "pass").slice(0, 5).map((item) => `${item.severity}: ${item.requirement}`)
+    riskMemo: findings.filter((item) => item.grade !== "pass").slice(0, 5).map(operationalRisk)
   };
+}
+
+function operationalRisk(item) {
+  const risks = {
+    "FP-001": "Workers may climb without reliable tie-off, anchorage, inspection, or rescue controls, increasing the likelihood of a fatal fall and a delayed rescue.",
+    "RF-001": "Crews may enter active RF fields without shutdown coordination or monitoring, creating uncontrolled exposure and possible injury.",
+    "RIG-001": "Unqualified rigging decisions or uninspected gear may cause dropped loads, struck-by injuries, equipment loss, and tower damage.",
+    "ELEC-001": "Unclear electrical controls can lead to contact with energized parts, shock, arc injury, fire, or unplanned service interruption.",
+    "LOTO-001": "Hazardous energy may be restored or remain present during work, exposing employees to electrocution, crushing, or unexpected startup.",
+    "TOWER-001": "Tower work may proceed without authorized climbers, competent oversight, rescue readiness, or coordinated RF and rigging controls.",
+    "EAP-001": "Crews may lose critical response time during an emergency because evacuation, communication, responder access, and contacts are undefined.",
+    "CS-001": "An unrecognized or uncontrolled confined-space atmosphere can cause incapacitation or fatality and expose rescuers to the same hazard.",
+    "CRN-001": "Lifts may proceed without qualified operators, ground assessment, load controls, or power-line clearance, risking collapse or fatal struck-by events.",
+    "EXC-001": "Excavation work may proceed without utility locating, protective systems, or safe access, risking cave-in, electrocution, or engulfment."
+  };
+  const consequence = risks[item.id] || `Accepting this gap leaves ${item.category.toLowerCase()} hazards without a complete, enforceable control process, increasing the chance of injury, work stoppage, inconsistent field decisions, and regulatory or customer exposure.`;
+  return `${item.severity} — ${item.category}: ${consequence}`;
 }
 
 function buildSchema() {
@@ -346,6 +363,7 @@ async function openAiReview(payload) {
       "For every playbook item, check that the manual includes the required program elements, not merely the topic heading.",
       "When standardsRefs are provided, assess whether the manual appears to address the intent of those standards and list missing standard-related gaps.",
       "Do not certify legal or regulatory compliance. Flag uncertain items for human review.",
+      "For riskMemo, explain the concrete operational consequence of accepting each failed or partial program section as-is. Describe likely exposure to workers, operations, equipment, customers, or regulatory obligations. Do not repeat the requirement text.",
       `Company context: ${payload.companyContext || "Cell tower construction, maintenance, and managed field work."}`,
       `SOW base: ${payload.sowBase || "Tower/Elevated"}`,
       "Playbook JSON:",
@@ -438,3 +456,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
