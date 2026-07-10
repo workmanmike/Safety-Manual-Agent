@@ -525,6 +525,15 @@ async function serveStatic(req, res) {
 const server = createServer((req, res) => {
   const url = new URL(req.url || "/", `http://${host}:${port}`);
 
+  if (url.pathname === "/api/health" && req.method === "GET") {
+    sendJson(res, 200, {
+      ok: true,
+      service: "safety-manual-agent",
+      route: "/api/health"
+    });
+    return;
+  }
+
   if (url.pathname.startsWith("/api/") && url.pathname !== "/api/review") {
     sendJson(res, 404, {
       error: "API route not found.",
@@ -586,3 +595,5 @@ process.on("SIGTERM", shutdown);
 server.listen(port, host, () => {
   console.log(`Tower Safety Manual Reviewer running at http://${host}:${port}`);
 });
+
+export { server };
