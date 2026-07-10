@@ -294,11 +294,14 @@ const defaultPlaybook = [
 
 const sampleManual = `Demonstration Telecom Safety Manual
 
-This example describes a mature safety program for cell tower construction, electrical, and civil work. Management assigns roles and responsibilities, qualified supervisors authorize work, employees receive task-specific training, required PPE and equipment are inspected before use, emergency response is planned, and training and inspection records are retained.
+This example describes a generally strong but incomplete safety program for cell tower construction, electrical, and civil work. It is intentionally designed to demonstrate meaningful program gaps and the operational risk of accepting the manual as-is. Management assigns roles and responsibilities, qualified supervisors authorize work, employees receive task-specific training, required PPE and equipment are inspected before use, emergency response is planned, and training and inspection records are retained.
 
-` + defaultPlaybook.map((item) => `${item.category}
+` + defaultPlaybook.slice(0, 24).map((item) => `${item.category}
 This program applies to all affected employees and subcontractors. A competent or qualified person, as applicable, is responsible for planning, training, authorization, pre-use inspection, hazard controls, emergency response, and documentation. Required controls include ${item.requiredProgramElements.join(", ")}. The program specifically addresses ${item.requiredEvidence.join(", ")}. Defective equipment is removed from service, changing conditions require reassessment, and completed inspections and training are documented.
-`).join("\n");
+`).join("\n") + `
+Program review note
+This demonstration manual contains unresolved program omissions. Those omissions require operational review and corrective action before the manual is accepted for field use.
+`;
 
 let selectedFile = null;
 let selectedFileBase64 = "";
