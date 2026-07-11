@@ -560,22 +560,36 @@ function renderResults(result) {
         <h2>Safety manual scorecard</h2>
         <p>${escapeHtml(summary.executiveSummary || "Review complete. Human safety review is still required before relying on results.")}</p>
         <div class="stats">
-          ${stat("Pass", summary.pass)}
-          ${stat("Partial", summary.partial)}
-          ${stat("Fail", summary.fail)}
-          ${stat("Needs review", summary.needsReview)}
+          ${stat("Pass", summary.pass, "pass")}
+          ${stat("Partial", summary.partial, "partial")}
+          ${stat("Fail", summary.fail, "fail")}
+          ${stat("Needs review", summary.needsReview, "needs_review")}
         </div>
-        ${memo.length ? `<div class="memo"><strong>Operational risk memo</strong><p>${memo.map(escapeHtml).join("<br>")}</p></div>` : ""}
+        ${memo.length ? `<div class="memo"><strong>Operational risk if accepted as-is</strong><div class="risk-list">${memo.map((risk) => `<p>${escapeHtml(risk)}</p>`).join("")}</div></div>` : ""}
       </div>
     </div>
     <div class="finding-list">
       ${findings.map(renderFinding).join("")}
     </div>
   `;
+
+  const findingList = $("results").querySelector(".finding-list");
+  $("results").querySelectorAll(".stat[data-grade]").forEach((card) => {
+    card.addEventListener("click", () => {
+      const selectedGrade = card.dataset.grade;
+      const isAlreadyActive = card.classList.contains("active");
+      $("results").querySelectorAll(".stat[data-grade]").forEach((item) => item.classList.remove("active"));
+      $("results").querySelectorAll(".finding").forEach((finding) => {
+        finding.hidden = !isAlreadyActive && finding.dataset.grade !== selectedGrade;
+      });
+      if (!isAlreadyActive) card.classList.add("active");
+      findingList?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 }
 
-function stat(label, value) {
-  return `<div class="stat"><span>${label}</span><strong>${Number(value || 0)}</strong></div>`;
+function stat(label, value, grade) {
+  return `<button class="stat" type="button" data-grade="${escapeHtml(grade)}" aria-label="Show ${escapeHtml(label)} findings"><span>${escapeHtml(label)}</span><strong>${Number(value || 0)}</strong><small>View findings →</small></button>`;
 }
 
 function renderFinding(item) {
@@ -584,7 +598,7 @@ function renderFinding(item) {
   const standardsRefs = Array.isArray(item.standardsRefs) ? item.standardsRefs : [];
   const standardGaps = Array.isArray(item.standardGaps) ? item.standardGaps : [];
   return `
-    <article class="finding">
+    <article class="finding" data-grade="${escapeHtml(grade)}">
       <div class="finding-top">
         <span class="grade ${escapeHtml(grade)}">${escapeHtml(grade.replace("_", " "))}</span>
         <div>
