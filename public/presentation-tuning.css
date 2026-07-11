@@ -4,6 +4,9 @@
 .brand b { font-size: 29px; }
 .brand small { font-size: 10px; }
 .hero .eyebrow { font-size: 14px; letter-spacing: .18em; margin-bottom: 18px; }
+.hero { grid-template-columns: 1fr; text-align: center; }
+.hero > div { width: 100%; }
+.hero .lede { margin-left: auto; margin-right: auto; }
 .memo { font-size: 12px; line-height: 1.55; }
 .memo p { margin: 7px 0 0; }
 
