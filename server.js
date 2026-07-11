@@ -201,16 +201,32 @@ function findEvidence(text, terms) {
     if (!normalized) continue;
     const index = lower.indexOf(normalized);
     if (index >= 0) {
-      const start = Math.max(0, index - 100);
-      const end = Math.min(haystack.length, index + normalized.length + 140);
       matches.push({
         term,
-        excerpt: haystack.slice(start, end).trim()
+        excerpt: evidenceExcerpt(haystack, index, normalized.length)
       });
     }
   }
 
   return matches;
+}
+
+function evidenceExcerpt(text, index, termLength) {
+  let start = Math.max(0, index - 100);
+  let end = Math.min(text.length, index + termLength + 140);
+  if (start > 0) {
+    const nextSpace = text.indexOf(" ", start);
+    if (nextSpace >= 0 && nextSpace < index) start = nextSpace + 1;
+  }
+  if (end < text.length) {
+    const previousSpace = text.lastIndexOf(" ", end);
+    if (previousSpace > index + termLength) end = previousSpace;
+  }
+  return `${start > 0 ? "…" : ""}${text.slice(start, end).trim()}${end < text.length ? "…" : ""}`;
+}
+
+function uniqueEvidenceMatches(matches) {
+  return matches.filter((match, index, all) => all.findIndex((candidate) => candidate.excerpt === match.excerpt) === index);
 }
 
 function heuristicReview({ manualText, playbook }) {
@@ -232,7 +248,7 @@ function heuristicReview({ manualText, playbook }) {
       grade,
       score: grade === "needs_review" ? 0 : Number(score.toFixed(2)),
       evidence: evidenceMatches.length
-        ? evidenceMatches.slice(0, 3).map((match) => match.excerpt)
+        ? uniqueEvidenceMatches(evidenceMatches).slice(0, 3).map((match) => match.excerpt)
         : [],
       citation: evidenceMatches.length ? "Text match in uploaded/pasted content" : "No evidence found in available text",
       recommendation: grade === "pass"
